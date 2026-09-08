@@ -1,0 +1,204 @@
+===========================================================================
+RENOMBRADOR (version 2) - Como funciona el programa
+===========================================================================
+
+1. QUE HACE EL PROGRAMA
+---------------------------------------------------------------------------
+El "Renombrador" automatiza el paso de "documento escaneado -> archivo
+renombrado". No esta atado a un unico tipo de documento: la PRIMERA vez
+que se ejecuta (o al elegir "Modificar configuracion"), un ASISTENTE
+pregunta como vienen los documentos y donde estan sus datos, y guarda esa
+respuesta en "settings.json" para no tener que repetirla cada vez.
+
+Con la configuracion ya lista, cada vez que se procesan documentos:
+
+  1. Revisa, uno por uno, los PDF de la carpeta PRUEBA (con una ventana de
+     progreso visible mientras trabaja). Si la configuracion dice que los
+     PDF vienen COMBINADOS (varios documentos en un mismo archivo), antes
+     los separa en documentos individuales.
+
+  2. Le hace OCR a cada documento para encontrar los campos configurados
+     (banco, numero de diario, codigo de vendor, o cualquier otro que se
+     haya marcado en el asistente), buscando cada uno solo dentro de la
+     zona de la hoja que se definio.
+
+  3. Si logra leer todos los campos obligatorios con suficiente confianza
+     y cumpliendo el patron esperado de cada uno, guarda una copia
+     renombrada (segun el patron configurado, ej. "{numero_diario}-{banco}-
+     {vendor}.pdf") en RESULTADO\<fecha del dia>.
+
+  4. Si no logra leerlos bien, abre una ventana de revision manual con el
+     recorte de cada campo (ampliable con un clic) para que se confirmen o
+     corrijan a mano. El documento tambien termina en RESULTADO.
+
+  5. Registra cada resultado (automatico o manual) en un log .csv (para
+     Excel) y .json (para uso interno).
+
+  6. Usa una lista de valores ya confirmados a mano (por cada campo) para
+     corregir automaticamente confusiones tipicas del OCR (como leer "O"
+     en vez de "0" o "I" en vez de "1"). Aplica a todos los campos
+     configurados: vendor, banco, numero de diario, etc.
+
+  7. Aplica reglas de conversion configurables por campo: si el OCR lee
+     "Davivienda" y hay una regla "Davivienda -> DAV", el campo queda
+     guardado como "DAV" automaticamente, sin intervencion manual.
+
+
+2. ARCHIVOS Y CARPETAS QUE USA
+---------------------------------------------------------------------------
+
+En la raiz de la carpeta del programa (lo que ve el usuario):
+
+  ejecutar_1_instalar_dependencias.bat
+      Doble clic UNA SOLA VEZ (o al cambiar de equipo) para instalar todo.
+
+  ejecutar_2_renombrador.bat
+      Doble clic CADA VEZ que se quieran procesar documentos nuevos.
+
+  PRUEBA\
+      Aqui se colocan los PDF escaneados a procesar.
+
+  RESULTADO\<fecha>\
+      Destino final de los archivos ya renombrados, organizados por dia.
+
+  POR_REVISAR\
+      Carpeta temporal para los que necesitan revision manual. Se vacia
+      automaticamente al confirmarlos en la ventana de revision.
+
+  Documentacion\
+      LEEME_PRIMERO.txt, COMO_FUNCIONA.txt, GUIA_PATRON_ESPERADO.txt,
+      QUE_CAMBIO.txt.
+
+Dentro de la carpeta "_sistema" (uso interno, no hace falta abrirla):
+
+  config.json
+      Ajustes de infraestructura: umbral de confianza del OCR, idioma,
+      nombres de carpetas. Editable con el Bloc de notas si hace falta,
+      pero casi nunca es necesario.
+
+  settings.json
+      La configuracion armada con el asistente: como vienen los documentos
+      (sueltos o combinados), que formatos tienen, donde estan los campos
+      en la hoja (zonas), patrones esperados, conversiones, y el patron del
+      nombre de archivo final. Se genera y edita SOLO desde el asistente.
+
+  codigos_confirmados.json
+      Valores ya confirmados como correctos, por cada campo (vendor, banco,
+      numero de diario, etc.). Se va llenando solo con cada revision manual,
+      validando que tengan forma de codigo valido antes de guardarlos.
+      Se usa para la correccion automatica de confusiones OCR (O/0, I/1).
+
+  log_renombrador.csv / log_renombrador.json
+      El historial: un registro por cada archivo procesado, con fecha,
+      nombre original, nombre nuevo, campos extraidos, metodo (automatico o
+      manual), confianza del OCR y estado. El .csv es para abrir en Excel;
+      el programa usa el .json internamente.
+
+  motor\ (carpeta con el codigo del programa)
+      config.py             Lee config.json y resuelve las rutas.
+      settings.py           Modelo de settings.json y el traductor de
+                             patrones amigables (ej. "LLL-NNNN", "A{6,}").
+      preprocesamiento.py   Mejora la imagen antes del OCR (endereza paginas
+                             giradas, convierte a blanco/negro).
+      ocr_engine.py         Habla con Tesseract y con los PDF.
+      extractores.py        Motor "clasico": busca campos por patrones de
+                             texto (modo de compatibilidad con v1).
+      extractores_zonas.py  Motor "zonas": busca cada campo dentro de la
+                             zona de la hoja marcada en el asistente, aplica
+                             conversiones y correccion O/0.
+      division_documentos.py Separa un PDF combinado en documentos
+                             individuales (por paginas fijas o por texto).
+      aprendizaje.py        Lista de valores confirmados por campo y
+                             correccion automatica de confusiones OCR.
+      almacenamiento.py     Carpetas, nombres de archivo, copiado.
+      registro.py           El log (.json y .csv).
+      gui.py                Ventanas de progreso y de revision manual.
+      selector_zonas.py     Widget de cuadricula para marcar zonas.
+      asistente.py          El asistente de configuracion (wizard).
+      main.py               Ordena todo lo anterior paso a paso.
+
+
+3. EL ASISTENTE DE CONFIGURACION
+---------------------------------------------------------------------------
+La primera vez que se ejecuta el programa (o al elegir "Modificar
+configuracion"), el asistente pregunta:
+
+  a) Como vienen los PDF: sueltos (cada archivo es un documento) o
+     combinados (varios documentos dentro del mismo PDF). Si vienen
+     combinados: cuantas paginas ocupa cada uno, o por que texto se
+     reconoce el inicio y fin de cada documento.
+
+  b) Cuantos formatos distintos hay. Para cada formato:
+       - Un nombre descriptivo.
+       - Una hoja de muestra (para marcar las zonas visualmente).
+       - Los campos a extraer: nombre, zona en la hoja (marcada con clic
+         en la cuadricula), patron esperado, si es obligatorio, si va
+         en mayusculas, y reglas de conversion (ver punto c).
+       - Texto identificador (una frase unica del documento que permite
+         reconocer ese formato automaticamente).
+
+  c) Por cada campo, opcionalmente, reglas de CONVERSION: si el OCR lee
+     cierto texto en la zona (ej. "Davivienda" o "Banco de Costa Rica"),
+     se guarda un valor estandarizado en su lugar (ej. "DAV" o "BCR").
+     Util para normalizar nombres de bancos, sucursales, etc.
+
+  d) El patron del nombre de archivo final, usando los nombres de los
+     campos entre llaves: ej. "{numero_diario}-{banco}-{vendor}".
+
+Esa configuracion queda guardada. La siguiente vez que se abra el
+programa, se pregunta si se quiere usar la misma o modificarla.
+
+
+4. PATRONES ESPERADOS
+---------------------------------------------------------------------------
+El "patron esperado" de un campo le dice al programa que forma debe tener
+el dato extraido para aceptarlo como valido. Si no coincide, el archivo
+va a revision manual en lugar de renombrarse automaticamente con un valor
+incorrecto.
+
+Ejemplos rapidos:
+
+  LLL-NNNN   = exactamente 3 letras, un guion, 4 digitos
+  NNNNNN_NNN = 6 digitos, guion bajo, 3 digitos
+  L{2,5}     = entre 2 y 5 letras
+  A{6,}      = 6 o mas caracteres alfanumericos
+
+Vea "GUIA_PATRON_ESPERADO.txt" para la referencia completa con todos los
+tokens disponibles y mas ejemplos.
+
+
+5. LA VENTANA DE REVISION MANUAL
+---------------------------------------------------------------------------
+Cuando el programa no puede aceptar un documento automaticamente (baja
+confianza del OCR, valor que no cumple el patron esperado, o campo
+obligatorio no encontrado), lo muestra en la ventana de revision manual:
+
+  - Un recorte del area de la hoja donde busco cada campo.
+  - El valor que leyo el OCR (o el texto crudo de la zona si no cumplio
+    el patron), pre-cargado en el campo de texto para facilitar la
+    correccion.
+  - Un indicador de si el valor actual cumple o no el patron esperado.
+  - Clic sobre el recorte para verlo ampliado.
+
+Al aceptar, el valor confirmado se guarda en la lista de codigos
+confirmados para ese campo, lo que mejora la correccion automatica en
+corridas futuras.
+
+
+6. LA LISTA DE CODIGOS CONFIRMADOS
+---------------------------------------------------------------------------
+El archivo "_sistema/codigos_confirmados.json" guarda, por cada campo, los
+valores que ya fueron confirmados a mano por un operador. El programa lo
+usa para:
+
+  - Corregir automaticamente confusiones tipicas del OCR (O/0 e I/1): si
+    el OCR lee "AIP0OO" pero "AIP000" ya esta confirmado, se corrige solo.
+  - Solo corrige si HAY exactamente UN valor confirmado que calce (para
+    no adivinar entre dos codigos parecidos).
+  - Aplica a todos los campos configurados: vendor, banco, numero de
+    diario, etc.
+
+Con el tiempo, a medida que se confirman mas valores manualmente, mas
+archivos pasan la fase automatica sin necesitar revision.
+
+===========================================================================

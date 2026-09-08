@@ -1,0 +1,129 @@
+===========================================================================
+QUE CAMBIO respecto a la version 1 (PROYECTO_RENOMBRADOR)
+===========================================================================
+
+Esta es una reconstruccion desde cero del mismo programa, pensada para
+mejorarlo en cuatro frentes: precision del OCR, experiencia de uso,
+robustez, y organizacion del codigo. Es un proyecto SEPARADO: no modifica
+ni depende de la carpeta "PROYECTO_RENOMBRADOR" original.
+
+
+1. PRECISION DEL OCR
+---------------------------------------------------------------------------
+  - CORRECCION DE ORIENTACION: si un PDF se escaneo de lado o al reves,
+    ahora se detecta y se endereza antes de leerlo (Tesseract lee muy mal
+    una pagina girada). Version 1 no hacia esto.
+
+  - BINARIZACION CON UMBRAL DE OTSU en la segunda pasada (el recorte
+    enfocado de cada dato): en vez de pasarle a Tesseract el recorte
+    agrandado tal cual, ahora se convierte a blanco/negro puro con un
+    umbral calculado a la medida de cada imagen (mejor que un numero fijo
+    a ciegas), lo que ayuda con sombras o papel fotocopiado.
+
+  - SOPORTE MULTI-PAGINA: version 1 solo miraba la primera pagina del
+    PDF. Ahora se intenta con hasta 3 paginas por archivo: si la primera
+    no trae los datos completos con buena confianza, se prueba la
+    siguiente antes de mandarlo a revision manual.
+
+  - CORRECCION O/0 e I/1 PARA TODOS LOS CAMPOS: el programa mantiene una
+    lista de valores ya confirmados por campo (vendor, banco, numero de
+    diario, etc.) y la usa para corregir automaticamente confusiones
+    tipicas del OCR. Version 1 solo hacia esto para el codigo de cliente.
+    Ahora aplica a cualquier campo configurado en el asistente.
+
+  - LISTA DE CODIGOS CONFIRMADOS MAS LIMPIA: se encontro que el archivo
+    "codigos_cliente_confirmados.txt" de la version 1 tenia entradas
+    basura (fragmentos de GUID, simbolos sueltos) que se colaron porque
+    nunca se validaba la forma del texto antes de guardarlo. Eso no solo
+    ensucia el archivo: tambien hace que la correccion automatica se
+    niegue a corregir mas seguido (se abstiene cuando hay mas de un
+    candidato parecido). Ahora se valida la forma de cada codigo antes de
+    guardarlo, y se limpia automaticamente cualquier basura que ya hubiera
+    (con respaldo del archivo original, por si acaso).
+
+
+2. CONFIGURACION SIN TOCAR CODIGO
+---------------------------------------------------------------------------
+  - ASISTENTE DE CONFIGURACION: la primera vez que se ejecuta el programa
+    (o al elegir "Modificar configuracion"), un asistente pregunta como
+    vienen los documentos y donde estan sus datos. No hace falta editar
+    ningun archivo a mano para adaptarlo a un nuevo formato.
+
+  - ZONAS EN LA HOJA: en vez de buscar los datos con patrones de texto en
+    toda la pagina, el asistente permite marcar visualmente en una
+    cuadricula las zonas exactas donde aparece cada campo. El OCR busca
+    solo en esa zona, lo que reduce errores y aumenta la confianza.
+
+  - MULTI-FORMATO: si hay distintos tipos de documentos (ej. transferencia
+    horizontal y transferencia vertical), se pueden configurar varios
+    formatos. El programa detecta automaticamente cual aplica a cada PDF,
+    usando un texto identificador unico o probando cual formato valida mas
+    campos.
+
+  - DOCUMENTOS COMBINADOS: si varios documentos vienen dentro de un mismo
+    PDF, el programa los puede separar automaticamente antes de procesar
+    (por cantidad fija de paginas, o por un texto que marca el inicio o
+    fin de cada uno).
+
+  - CONVERSIONES POR CAMPO: en el asistente se pueden definir reglas de
+    sustitucion para cada campo. Si el OCR lee cierto texto en la zona
+    (ej. "Davivienda" o "Banco de Costa Rica"), el programa lo reemplaza
+    automaticamente por un valor estandarizado (ej. "DAV" o "BCR"). Util
+    para normalizar nombres de bancos, tipos de pago, sucursales, etc.
+
+  - PATRON ESPERADO CON MAS OPCIONES: ademas de repeticion exacta (LLL)
+    y "uno o mas" (L+), ahora se puede pedir un minimo (A{6,}) o un rango
+    (L{2,5}). Ver "GUIA_PATRON_ESPERADO.txt" para todos los ejemplos.
+
+
+3. EXPERIENCIA DE USO
+---------------------------------------------------------------------------
+  - VENTANA DE PROGRESO durante la fase automatica ("Procesando 4 de 20:
+    documento.pdf" + barra de progreso). Version 1 no mostraba nada
+    durante esa fase.
+
+  - VENTANA DE REVISION MANUAL generalizada: muestra cualquier cantidad
+    de campos (no solo 2 fijos), cada uno con su recorte, su valor leido,
+    y un indicador cuando ese valor no cumple el patron esperado.
+
+  - En la ventana de revision manual: contador de pendientes, atajos de
+    teclado (Enter = Aceptar, Esc = Cancelar), y clic sobre cualquier
+    recorte para verlo mas grande.
+
+  - LOG TAMBIEN EN .CSV: ademas del .json (que es el que el programa usa
+    de verdad), se mantiene sincronizado un .csv de solo lectura para
+    abrir directo en Excel sin pasos extra.
+
+
+4. ROBUSTEZ
+---------------------------------------------------------------------------
+  - Si Tesseract-OCR no se encuentra instalado, el programa avisa con un
+    mensaje claro y se cierra en vez de fallar mas adelante con un error
+    confuso.
+  - Si "config.json" queda mal editado, el programa avisa y sigue con
+    valores por defecto en vez de dejar de funcionar.
+  - Patrones de vendor y banco mas estrictos: valores demasiado cortos
+    (ej. "2", "29") o sin la estructura esperada (ej. "DEVELOPMENT") van
+    a revision manual en vez de renombrarse automaticamente con datos
+    incorrectos.
+
+
+5. ORGANIZACION (para quien lo mantenga despues)
+---------------------------------------------------------------------------
+  Version 1 tenia un solo archivo "renombrador.py" de casi 1000 lineas
+  con todo mezclado (OCR, ventanas, archivos, log). Version 2 lo separa
+  por tema dentro de la carpeta "_sistema/motor/" (ver COMO_FUNCIONA.txt),
+  y saca la configuracion ajustable a "config.json" y "settings.json".
+
+
+6. QUE SE MANTUVO IGUAL A PROPOSITO
+---------------------------------------------------------------------------
+  - Sigue siendo Python + Tesseract-OCR, instalado sin permisos de
+    administrador, funcionando sin internet una vez instalado.
+  - El boton "Cancelar" de la revision manual sigue omitiendo solo ese
+    archivo (no todo el proceso): nadie deberia sentirse obligado a
+    inventar un dato para poder cerrar la ventana.
+  - Los archivos originales de PRUEBA nunca se borran ni modifican: el
+    programa siempre trabaja sobre copias.
+
+===========================================================================

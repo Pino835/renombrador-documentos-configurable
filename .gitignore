@@ -1,0 +1,14 @@
+# Datos de entrada/salida (no forman parte del codigo fuente)
+PRUEBA/
+POR_REVISAR/
+RESULTADO/
+
+# Configuracion y datos generados por equipo (via el asistente)
+_sistema/settings.json
+_sistema/log_renombrador.csv
+_sistema/log_renombrador.json
+_sistema/codigos_confirmados.json
+
+# Python
+__pycache__/
+*.pyc

@@ -1,0 +1,94 @@
+===========================================================================
+  GUIA: COMO DEFINIR EL PATRON ESPERADO DE UN CAMPO
+===========================================================================
+
+El "patron esperado" le dice al programa que forma debe tener el dato que
+extrajo el OCR para aceptarlo como valido. Si el dato no coincide con el
+patron, el programa manda el archivo a revision manual en lugar de
+renombrarlo automaticamente con un valor incorrecto.
+
+---------------------------------------------------------------------------
+TOKENS DISPONIBLES
+---------------------------------------------------------------------------
+
+  L  =  Una letra (A hasta Z, mayuscula o minuscula)
+  N  =  Un digito (0 hasta 9)
+  A  =  Una letra O un digito (alfanumerico)
+
+Cualquier otro caracter se toma como literal exacto:
+  guion (-)  guion bajo (_)  barra (/)  punto (.)  parentesis, etc.
+
+---------------------------------------------------------------------------
+CUANTIFICADORES (cuantas veces se repite)
+---------------------------------------------------------------------------
+
+  Repetir el token     = cantidad EXACTA
+    Ejemplo: LLL       = exactamente 3 letras
+
+  + despues del token  = UNO O MAS de ese tipo
+    Ejemplo: N+        = uno o mas digitos
+
+  {n,} despues         = N O MAS de ese tipo
+    Ejemplo: A{6,}     = 6 o mas alfanumericos
+
+  {n,m} despues        = ENTRE n Y m de ese tipo
+    Ejemplo: L{2,5}    = entre 2 y 5 letras
+
+---------------------------------------------------------------------------
+EJEMPLOS CON DATOS REALES
+---------------------------------------------------------------------------
+
+  Dato en el documento          Patron esperado       Por que
+  ----------------------------  --------------------  -------------------------
+  DAV                           L{2,5}                Entre 2 y 5 letras
+  BCR                           LLL                   Exactamente 3 letras
+  486744_008                    NNNNNN_NNN            6 digitos, _, 3 digitos
+  2026-07-17                    NNNN-NN-NN            Fecha ano-mes-dia
+  17/07/2026                    NN/NN/NNNN            Fecha dia/mes/ano
+  INV-2026-001234               LLL-NNNN-NNNNNN       Prefijo + ano + numero
+  PGFZE000                      A{6,}                 6 o mas alfanumericos
+  EFM000C                       A{6,9}                Entre 6 y 9 alfanumericos
+  cualquier texto sin espacios  A+                    Cualquier alfanumerico
+
+---------------------------------------------------------------------------
+CUANDO USAR "regex:" (PARA CASOS AVANZADOS)
+---------------------------------------------------------------------------
+
+Si el patron simple no alcanza, puede escribir "regex:" seguido de una
+expresion regular de Python. Ejemplos:
+
+  Caso                                  Patron
+  ------------------------------------  ----------------------------------------
+  2+ letras, luego 3 digitos, optativo  regex:^[A-Za-z]{2,}[0-9]{3}[A-Za-z0-9]*$
+  Solo DAV, BCR o BAC exactamente       regex:^(DAV|BCR|BAC)$
+  Texto con espacios (3 a 30 letras)    regex:^[A-Za-z\s]{3,30}$
+  Numero con parte opcional al final    regex:^\d{6}_\d{3}(-\d)?$
+  Acepta absolutamente cualquier texto  regex:.+
+
+---------------------------------------------------------------------------
+REGLA PRACTICA: CUANDO USAR CADA UNO
+---------------------------------------------------------------------------
+
+  - Longitud fija y estructura conocida     -> tokens exactos  (LLL-NNNN)
+  - Longitud variable, mismo tipo           -> + o {n,}        (L+, A{6,})
+  - Mezcla obligatoria de letras y digitos
+    en posiciones especificas              -> regex:
+  - No importa el formato, solo que
+    haya algo                              -> A+
+
+---------------------------------------------------------------------------
+NOTA IMPORTANTE
+---------------------------------------------------------------------------
+
+Un patron mas estricto significa menos errores automaticos: el programa
+solo acepta el dato si tiene exactamente la forma esperada, y manda a
+revision manual cualquier cosa que no coincida (fechas, texto de relleno,
+etc.).
+
+Un patron muy permisivo (como A+ o regex:.+) acepta casi cualquier cosa,
+lo que puede causar que el programa renombre archivos con datos incorrectos
+sin darse cuenta.
+
+Recomendacion: sea tan especifico como el dato real lo permita.
+
+===========================================================================

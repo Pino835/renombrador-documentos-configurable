@@ -1,0 +1,33 @@
+{
+  "_comentario": "Configuracion del RENOMBRADOR. Se puede editar con el Bloc de notas sin tocar el codigo. Cuidado: es un archivo JSON, respete las comillas y comas.",
+
+  "carpetas": {
+    "entrada": "PRUEBA",
+    "por_revisar": "POR_REVISAR",
+    "resultado": "RESULTADO"
+  },
+
+  "ocr": {
+    "idiomas": "spa+eng",
+    "dpi_render": 300,
+    "umbral_confianza_minima": 55.0
+  },
+
+  "_comentario_patrones": "Cada patron es una expresion regular (regex) de Python. Se prueban EN ORDEN, se usa el primero que encuentre algo. Para agregar un formato de factura nuevo, agregue otra entrada a la lista sin borrar las anteriores.",
+
+  "patrones_factura": [
+    "CMER[\\s\\-]{0,2}([A-Za-z0-9]{3,15})"
+  ],
+
+  "prefijo_factura_normalizado": "CMER-",
+
+  "etiquetas_factura_respaldo": [
+    "Factura\\s*[:\\-]?"
+  ],
+
+  "etiquetas_cliente": [
+    "(?:C[oóeé0]d\\.?\\s*(?:de\\s*)?Cliente|Cliente\\s*(?:No\\.?|N[°º]|#))\\s*[:\\-]?"
+  ],
+
+  "limite_superior_ratio": 0.5
+}

@@ -1,0 +1,125 @@
+===========================================================================
+RENOMBRADOR (version 2) - Antes de usar este programa (leer una sola vez)
+===========================================================================
+
+Este programa lee datos de documentos escaneados en PDF y los renombra
+automaticamente. Que datos busca y donde estan en la hoja se configura
+con un asistente que aparece la primera vez que se usa -- no hace falta
+tocar codigo para adaptarlo a un documento distinto.
+
+Antes de usarlo por primera vez en un equipo, revise esta lista.
+
+
+1. TENER LA CARPETA COMPLETA
+---------------------------------------------------------------------------
+No copie un solo archivo: copie TODA esta carpeta en el equipo donde se
+va a usar. Al usuario solo le interesan dos archivos en la raiz:
+
+  - ejecutar_1_instalar_dependencias.bat  (instalar, una sola vez)
+  - ejecutar_2_renombrador.bat            (usar el programa)
+
+El resto de archivos tecnicos (config.json, settings.json, motor, etc.)
+estan dentro de la carpeta "_sistema" y no hace falta abrirlos ni
+tocarlos para nada.
+
+
+2. CONEXION A INTERNET (solo para el primer paso)
+---------------------------------------------------------------------------
+El primer paso (instalar dependencias) descarga Python y Tesseract-OCR si
+el equipo no los tiene, desde python.org y GitHub. Sin internet, ese paso
+falla. Una vez instalado todo, procesar documentos SI funciona sin
+internet.
+
+
+3. NO HACE FALTA SER ADMINISTRADOR DEL EQUIPO
+---------------------------------------------------------------------------
+Todo se instala "solo para este usuario" (no en Archivos de Programa), asi
+que un usuario normal, sin permisos de administrador, puede instalarlo y
+usarlo sin problema.
+
+
+4. ORDEN PARA EJECUTAR LOS ARCHIVOS
+---------------------------------------------------------------------------
+  Paso 1 (una sola vez, o cuando se quiera actualizar):
+      Doble clic en "ejecutar_1_instalar_dependencias.bat"
+
+  Paso 2 (cada vez que se quieran procesar documentos):
+      Doble clic en "ejecutar_2_renombrador.bat"
+
+      La PRIMERA vez, antes de procesar nada, se abre un asistente que
+      pregunta como vienen los documentos y donde estan sus datos (ver
+      "COMO_FUNCIONA.txt", seccion 4). Las siguientes veces, se pregunta
+      si se quiere usar esa misma configuracion o modificarla.
+
+
+5. IMPORTANTE: SI EL EQUIPO NO TENIA PYTHON INSTALADO
+---------------------------------------------------------------------------
+Si el Paso 1 instalo Python por primera vez en el equipo (no lo tenia),
+REINICIE EL EQUIPO UNA VEZ antes de usar el Paso 2. A veces Windows no
+"ve" un programa recien instalado hasta reiniciar o cerrar sesion.
+
+Si ya tenia Python instalado, no hace falta reiniciar.
+
+
+6. SI EL ANTIVIRUS O WINDOWS BLOQUEA ALGO
+---------------------------------------------------------------------------
+Como el Paso 1 descarga e instala programas (Python, Tesseract-OCR) de
+forma automatica, es posible que el antivirus de la empresa o Windows
+SmartScreen muestre una advertencia o bloquee la descarga la primera vez.
+
+Si eso pasa, avisar a IT para que autoricen "python.org" y "github.com" /
+"objects.githubusercontent.com", o que instalen Python y Tesseract-OCR
+manualmente esa vez (los enlaces oficiales quedan explicados dentro de
+"_sistema/instalar_dependencias.py" si hace falta hacerlo a mano).
+
+
+7. CARPETA "PRUEBA" CON LOS DOCUMENTOS ESCANEADOS
+---------------------------------------------------------------------------
+Los documentos escaneados (en PDF) deben colocarse en la carpeta PRUEBA,
+que esta dentro de esta misma carpeta del programa:
+
+      ...\PROYECTO ULTRA SECRETO 3\PRUEBA\
+
+Si esa carpeta no existe todavia, el programa la crea sola la primera vez
+que se ejecuta el Paso 2, y avisa que hay que poner los PDF ahi.
+
+
+8. DONDE QUEDAN LOS RESULTADOS
+---------------------------------------------------------------------------
+  - PDF ya renombrados:
+        ...\PROYECTO ULTRA SECRETO 3\RESULTADO\<fecha del dia>\
+
+  - Detalle de cada ejecucion (log), dentro de "_sistema":
+        _sistema\log_renombrador.csv  (abrir con Excel)
+        _sistema\log_renombrador.json (el que usa el programa internamente)
+
+
+9. AJUSTES SIN TOCAR CODIGO
+---------------------------------------------------------------------------
+Para adaptar el programa a un documento distinto (otro formato, otro banco,
+PDF combinados en vez de sueltos), no hace falta editar ningun archivo a
+mano: se vuelve a correr el asistente eligiendo "Modificar configuracion"
+la proxima vez que se abra el programa.
+
+El archivo "_sistema/config.json" (se abre con el Bloc de notas) existe
+para ajustes de infraestructura que casi nunca cambian: el umbral de
+confianza minima del OCR, el idioma, y los nombres de las carpetas.
+
+
+10. DOCUMENTACION DISPONIBLE
+---------------------------------------------------------------------------
+La carpeta "Documentacion" (dentro de esta carpeta) contiene:
+
+  - LEEME_PRIMERO.txt        Este archivo.
+  - COMO_FUNCIONA.txt        Descripcion detallada del programa.
+  - GUIA_PATRON_ESPERADO.txt Como definir el patron esperado de un campo.
+  - QUE_CAMBIO.txt           Resumen de mejoras respecto a la version 1.
+
+Vea "QUE_CAMBIO.txt" para un resumen de las diferencias con la version
+anterior del programa.
+
+
+===========================================================================
+Si algo no funciona como se espera, anote el mensaje exacto que aparece en
+pantalla (o una foto) para poder revisarlo.
+===========================================================================
